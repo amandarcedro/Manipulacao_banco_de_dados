@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PORTIFÓLIO DESAFIOS - Amanda Rehder Cedro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap');
+    
+    :root {
+      --rosa-bebe: #f8d7e6;
+      --rosa-claro: #f9e8f0;
+      --verde-menta: #d6f0e0;
+      --azul-bebe: #d6e8f0;
+      --branco: #ffffff;
+      --cinza-claro: #f5f5f5;
+      --texto: #5a5a5a;
+      --destaque: #c97b9a;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--branco);
+      color: var(--texto);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--rosa-bebe) 0%, var(--rosa-claro) 100%);
+      padding: 30px 0;
+      border-radius: 0 0 20px 20px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+    }
+    
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: var(--destaque);
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo i {
+      margin-right: 10px;
+      font-size: 2.5rem;
+    }
+    
+    .student-info {
+      background-color: var(--branco);
+      padding: 12px 20px;
+      border-radius: 30px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+    
+    .student-info strong {
+      color: var(--destaque);
+      font-size: 1.1rem;
+    }
+    
+    .main-title {
+      text-align: center;
+      margin: 40px 0;
+    }
+    
+    .main-title h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      color: var(--destaque);
+      margin-bottom: 10px;
+    }
+    
+    .main-title p {
+      font-size: 1.2rem;
+      color: var(--texto);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .navigation {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+      gap: 15px;
+    }
+    
+    .nav-btn {
+      padding: 12px 30px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      background-color: var(--branco);
+      color: var(--destaque);
+      border: 2px solid var(--rosa-bebe);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .nav-btn.active, .nav-btn:hover {
+      background-color: var(--destaque);
+      color: var(--branco);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(201, 123, 154, 0.3);
+    }
+    
+    .content-section {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .content-section.active {
+      display: block;
+    }
+    
+    .section-title {
+      text-align: center;
+      color: var(--destaque);
+      font-size: 2.2rem;
+      margin-bottom: 40px;
+      position: relative;
+      font-family: 'Playfair Display', serif;
+    }
+    
+    .section-title:after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(to right, var(--rosa-bebe), var(--destaque));
+      margin: 15px auto;
+      border-radius: 2px;
+    }
+    
+    .challenges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+    }
+    
+    .challenge-card {
+      background: var(--branco);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      border: 1px solid #f0f0f0;
+    }
+    
+    .challenge-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .card-header {
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .html-card .card-header {
+      background: linear-gradient(135deg, var(--azul-bebe) 0%, var(--verde-menta) 100%);
+    }
+    
+    .qmd-card .card-header {
+      background: linear-gradient(135deg, var(--rosa-bebe) 0%, var(--rosa-claro) 100%);
+    }
+    
+    .card-header h3 {
+      font-size: 1.5rem;
+      color: var(--texto);
+      margin: 0;
+    }
+    
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: var(--destaque);
+    }
+    
+    .card-content {
+      padding: 20px;
+    }
+    
+    .card-content p {
+      margin-bottom: 20px;
+      color: var(--texto);
+      font-size: 0.95rem;
+    }
+    
+    .card-links {
+      display: flex;
+      justify-content: center;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 10px 25px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+    
+    .html-btn {
+      background-color: var(--azul-bebe);
+      color: var(--texto);
+      border: 1px solid #c0d9e8;
+    }
+    
+    .html-btn:hover {
+      background-color: #b8d5e8;
+      transform: scale(1.05);
+    }
+    
+    .qmd-btn {
+      background-color: var(--rosa-bebe);
+      color: var(--texto);
+      border: 1px solid #e8c0d0;
+    }
+    
+    .qmd-btn:hover {
+      background-color: #f0c6d6;
+      transform: scale(1.05);
+    }
+
+    .colab-btn {
+      background-color: #f8b400;
+      color: var(--texto);
+      border: 1px solid #e6a500;
+    }
+    
+    .colab-btn:hover {
+      background-color: #e6a500;
+      transform: scale(1.05);
+    }
+    
+    footer {
+      background-color: var(--cinza-claro);
+      padding: 30px 20px;
+      text-align: center;
+      border-radius: 20px 20px 0 0;
+      margin-top: 60px;
+    }
+    
+    footer p {
+      color: var(--texto);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+      }
+      
+      .challenges-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+      
+      .main-title h1 {
+        font-size: 2.2rem;
+      }
+      
+      .navigation {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .nav-btn {
+        width: 80%;
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .challenges-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .main-title h1 {
+        font-size: 1.8rem;
+      }
+      
+      .section-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-graduation-cap"></i>
+          <span>PORTIFÓLIO DESAFIOS</span>
+        </div>
+        <div class="student-info">
+          <p><strong>Amanda Rehder Cedro</strong> | RA: 253507</p>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="main-title">
+      <h1>Desafios de Programação</h1>
+      <p>Explore os desafios desenvolvidos durante o curso de Manipulação de Banco de Dados</p>
+    </div>
+    
+    <nav class="navigation">
+      <a href="#" class="nav-btn active" data-target="html-section">Página HTML</a>
+      <a href="#" class="nav-btn" data-target="qmd-section">Página QMD</a>
+    </nav>
+    
+    <!-- Seção HTML -->
+    <section id="html-section" class="content-section active">
+      <h2 class="section-title">Desafios em HTML</h2>
+      
+      <div class="challenges-grid">
+        <!-- Desafio 1 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-code"></i>
+            </div>
+            <h3>Desafio 1</h3>
+          </div>
+          <div class="card-content">
+            <p>Lendo dados de diferentes formas. Qual é o meio mais rápido?</p>
+            <div class="card-links">
+              <a href="Desafio_01.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 2 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-laptop-code"></i>
+            </div>
+            <h3>Desafio 2</h3>
+          </div>
+          <div class="card-content">
+            <p>Manipulando dados em Python. Mapa de calor representando o percentual de atraso para determinada linha aérea.</p>
+            <div class="card-links">
+              <a href="Desafio_02.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 3 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <h3>Desafio 3</h3>
+          </div>
+          <div class="card-content">
+            <p>Encontrando e lendo arquivos no formato Parquet e JSON. (PDF)</p>
+            <div class="card-links">
+              <a href="Desafio_03.pdf" class="btn html-btn">Ver PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 4 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-mouse-pointer"></i>
+            </div>
+            <h3>Desafio 4</h3>
+          </div>
+          <div class="card-content">
+            <p>Produzindo um mapa que apresenta todo o trajeto voado por uma aeronave ao longo de todo o ano. A espessura das linhas representa distância dos voos.</p>
+            <div class="card-links">
+              <a href="Desafio_04.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 5 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <h3>Desafio 5</h3>
+          </div>
+          <div class="card-content">
+            <p>Corrigindo os códigos dados em aula sobre SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_05.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 6 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-paint-brush"></i>
+            </div>
+            <h3>Desafio 6</h3>
+          </div>
+          <div class="card-content">
+            <p>Manipualando e aprendendo a usar arquivos SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_06.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 7 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-universal-access"></i>
+            </div>
+            <h3>Desafio 7</h3>
+          </div>
+          <div class="card-content">
+            <p>Corrigindo os códigos dados em aula sobre SQL - Parte 2.</p>
+            <div class="card-links">
+              <a href="Desafio_07.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 8 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <h3>Desafio 8</h3>
+          </div>
+          <div class="card-content">
+            <p>Obtendo informações de um arquivo SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_08.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 9 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <h3>Desafio 9</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite - Processamento de Dados em Lote.</p>
+            <div class="card-links">
+              <a href="Desafio_09.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 10 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <h3>Desafio 10</h3>
+          </div>
+          <div class="card-content">
+            <p>Introdução ao Polars e Dados Relacionais com Polars.</p>
+            <div class="card-links">
+              <a href="Desafio_10.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 11 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-database"></i>
+            </div>
+            <h3>Desafio 11</h3>
+          </div>
+          <div class="card-content">
+            <p>Introdução ao Polars - Importação e Manipulação de Dados Utilizando Polars.</p>
+            <div class="card-links">
+              <a href="Desafio_11.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 12 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-sync-alt"></i>
+            </div>
+            <h3>Desafio 12</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite e Polars. (Python)</p>
+            <div class="card-links">
+              <a href="Desafio_12.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 13 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h3>Desafio 13</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite e Polars. (Python) - Parte 2</p>
+            <div class="card-links">
+              <a href="Desafio_13.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 14 -->
+        <div class="challenge-card html-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Desafio 14</h3>
+          </div>
+          <div class="card-content">
+            <p>Visualização de Dados com Plotline.</p>
+            <div class="card-links">
+              <a href="Desafio_14.html" class="btn html-btn">Ver HTML</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Seção QMD -->
+    <section id="qmd-section" class="content-section">
+      <h2 class="section-title">Desafios em QMD</h2>
+      
+      <div class="challenges-grid">
+        <!-- Desafio 1 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 1</h3>
+          </div>
+          <div class="card-content">
+            <p>Lendo dados de diferentes formas. Qual é o meio mais rápido?</p>
+            <div class="card-links">
+              <a href="Desafio_01.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 2 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 2</h3>
+          </div>
+          <div class="card-content">
+            <p>Manipulando dados em Python. Mapa de calor representando o percentual de atraso para determinada linha aérea.</p>
+            <div class="card-links">
+              <a href="Desafio_02.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 3 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 3</h3>
+          </div>
+          <div class="card-content">
+            <p>Encontrando e lendo arquivos no formato Parquet e JSON.</p>
+            <div class="card-links">
+              <a href="Desafio_03.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 4 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 4</h3>
+          </div>
+          <div class="card-content">
+            <p>Produzindo um mapa que apresenta todo o trajeto voado por uma aeronave ao longo de todo o ano. A espessura das linhas representa distância dos voos.</p>
+            <div class="card-links">
+              <a href="Desafio_04.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 5 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 5</h3>
+          </div>
+          <div class="card-content">
+            <p>Corrigindo os códigos dados em aula sobre SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_05.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 6 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 6</h3>
+          </div>
+          <div class="card-content">
+            <p>Manipualando e aprendendo a usar arquivos SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_06.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 7 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 7</h3>
+          </div>
+          <div class="card-content">
+            <p>Corrigindo os códigos dados em aula sobre SQL - Parte 2.</p>
+            <div class="card-links">
+              <a href="Desafio_07.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Desafio 8 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 8</h3>
+          </div>
+          <div class="card-content">
+            <p>Obtendo informações de um arquivo SQL.</p>
+            <div class="card-links">
+              <a href="Desafio_08.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 9 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 9</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite - Processamento de Dados em Lote.</p>
+            <div class="card-links">
+              <a href="Desafio_09.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 10 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 10</h3>
+          </div>
+          <div class="card-content">
+            <p>Introdução ao Polars e Dados Relacionais com Polars.</p>
+            <div class="card-links">
+              <a href="Desafio_10.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 11 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 11</h3>
+          </div>
+          <div class="card-content">
+            <p>Introdução ao Polars - Importação e Manipulação de Dados Utilizando Polars.</p>
+            <div class="card-links">
+              <a href="Desafio_11.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 12 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 12</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite e Polars. (Python)</p>
+            <div class="card-links">
+              <a href="Desafio_12.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 13 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 13</h3>
+          </div>
+          <div class="card-content">
+            <p>SQLite e Polars. (Python) - Parte 2</p>
+            <div class="card-links">
+              <a href="Desafio_13.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 14 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <h3>Código do Desafio 14</h3>
+          </div>
+          <div class="card-content">
+            <p>Visualização de Dados com Plotline.</p>
+            <div class="card-links">
+              <a href="Desafio_14.qmd" class="btn qmd-btn" download>Download QMD</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desafio 15 -->
+        <div class="challenge-card qmd-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fab fa-google"></i>
+            </div>
+            <h3>Código do Desafio 15</h3>
+          </div>
+          <div class="card-content">
+            <p>Loop em paralelo e loop em série (Julia) - Feito no Google Colab.</p>
+            <div class="card-links">
+              <a href="https://colab.research.google.com/drive/1itskby_BfX0_WjdW4XdJt3X03wrLbtsQ#scrollTo=ONi2ugIF6Yc8&uniqifier=1" target="_blank" class="btn colab-btn">Abrir no Colab</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <footer>
+    <div class="container">
+      <p> Manipulação de Banco de Dados (ME315) - 2025  |  IMECC - UNICAMP</p>
+    </div>
+  </footer>
+
+  <script>
+    // Navegação entre páginas
+    document.addEventListener('DOMContentLoaded', function() {
+      const navButtons = document.querySelectorAll('.nav-btn');
+      
+      navButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Remove a classe active de todos os botões
+          navButtons.forEach(btn => btn.classList.remove('active'));
+          
+          // Adiciona a classe active ao botão clicado
+          this.classList.add('active');
+          
+          // Oculta todas as seções
+          document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+          });
+          
+          // Mostra a seção correspondente
+          const targetSection = document.getElementById(this.dataset.target);
+          targetSection.classList.add('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+---
+title: "Desafio_13"
+author: "Amanda Cedro"
+format: html
+editor: visual
+---
+
+# DESAFIO 13:
+
+## Importando os pacotes que serão utilizados
+
+```{python}
+import polars as pl
+import sqlite3
+import gzip 
+```
+
+## Questão 1:
+
+Crie um banco de dados SQLite utilizando os 3 arquivos acima. O banco de dados deve conter as seguintes tabelas: basics, ratings e principals.
+
+```{python}
+# Lendo os arquivos.tsv.gz que serão utilizados para fazer o banco de dados:
+basics = pl.read_csv("dados/title.basics0.tsv.gz", separator="\t", null_values="\\N")
+ratings = pl.read_csv("dados/title.ratings.tsv.gz", separator="\t", null_values="\\N")
+principals = pl.read_csv("dados/title.principals0.tsv.gz", separator="\t", null_values="\\N")
+
+```
+
+```{python}
+# Criando o banco SQLite e exportando as tabelas
+with sqlite3.connect("movies.sqlite3") as conn:
+    basics.to_pandas().to_sql("basics", conn, if_exists="replace", index=False, chunksize=1000000)
+    ratings.to_pandas().to_sql("ratings", conn, if_exists="replace", index=False, chunksize=1000000)
+    principals.to_pandas().to_sql("principals", conn, if_exists="replace", index=False, chunksize=1000000)
+
+# Conectando ao banco de dados:    
+conn = sqlite3.connect("movies.sqlite3")
+```
+
+## Questão 2:
+
+(Utilizando SQL, responda): Quais são os 5 filmes com as maiores notas (averageRating)? Apresente uma solução capaz de desempatar os filmes baseando-se no número de votos recebidos.
+
+```{python}
+# Consulta SQL:
+# Seleciona título, nota média e número de votos
+# Ordena por nota (decrescente) e, em caso de empate, por número de votos (decrescente)
+# Limita o resultado aos 5 primeiros
+query = """
+SELECT 
+    b.primaryTitle AS Título,
+    r.averageRating AS Nota,
+    r.numVotes AS Votos
+FROM ratings r
+JOIN basics b ON b.tconst = r.tconst
+ORDER BY r.averageRating DESC, r.numVotes DESC
+LIMIT 5;
+"""
+
+# Executando a consulta e exibindo o resultado em formato de tabela
+top5 = pd.read_sql_query(query, conn)
+print(top5)
+```
+
+## Questão 3:
+
+(Utilizando SQL, responda): Qual é o gênero mais frequente entre os filmes com nota maior que 8?
+
+```{python}
+# Consulta SQL:
+# 1. Junta basics + ratings
+# 2. Filtra filmes com nota > 8
+# 3. Separa gêneros (divididos por vírgula)
+# 4. Conta qual gênero aparece mais vezes
+query = """
+WITH generos AS (
+    SELECT
+        TRIM(value) AS genero
+    FROM basics AS b
+    JOIN ratings AS r ON b.tconst = r.tconst,
+         STRING_SPLIT(b.genres, ',')
+    WHERE r.averageRating > 8
+)
+SELECT genero, COUNT(*) AS qtd
+FROM generos
+GROUP BY genero
+ORDER BY qtd DESC
+LIMIT 1;
+"""
+
+# Executa a consulta
+resultado = pd.read_sql_query(query, conn)
+print(resultado)
+```
+
+## Questão 4:
+
+(Utilizando SQL, responda): Quais são os 3 atores/atrizes que mais participaram de filmes com nota maior que 7.5?
+
+```{python}
+# Consulta SQL:
+#  Junta as três tabelas: ratings + basics + principals
+#  Filtra apenas filmes com nota > 7.5
+#  Considera apenas atores/atrizes (categories 'actor' e 'actress')
+#  Conta quantos filmes cada um participou
+#  Mostra os 3 com mais participações
+query = """
+SELECT 
+    p.nconst AS id_pessoa,
+    p.category AS categoria,
+    COUNT(*) AS qtd_filmes
+FROM principals AS p
+JOIN ratings AS r ON p.tconst = r.tconst
+JOIN basics AS b ON b.tconst = r.tconst
+WHERE r.averageRating > 7.5
+  AND p.category IN ('actor', 'actress')
+GROUP BY p.nconst, p.category
+ORDER BY qtd_filmes DESC
+LIMIT 3;
+"""
+
+# Executa a consulta e exibe o resultado
+top3 = pd.read_sql_query(query, conn)
+print(top3)
+```
+
+## Desconectando
+
+```{python}
+conn.close()
+```
+
+## Data e hora do html:
+
+```{r}
+# Salvando a data e o horário em que o html foi gerado
+Sys.time()
+```

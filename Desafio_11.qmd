@@ -1,0 +1,257 @@
+---
+title: "Desafio_11"
+author: "Amanda Cedro"
+format: 
+  html:
+    self-contained: true
+editor: visual
+---
+
+# DESAFIO 11
+
+```{python}
+import polars as pl        # Manipulação e análise de dados (substitui o pandas)
+import matplotlib.pyplot as plt  # Visualizações (será útil nas próximas questões)
+```
+
+## Questão 1:
+
+Utilizando o arquivo renda_adulta.csv e sabendo que ele não possui cabeçalho, faça a importação do banco de dados utilizando os nomes das colunas conforme apresentado acima e na sequência ali indicada. No momento da importação do arquivo, você deve, também, indicar os tipos de cada uma das colunas. Utilize o fato de que o símbolo ? representa valores faltantes.
+
+```{python}
+colunas = [
+    "age", "workclass", "fnlwgt", "education", "education-num", 
+    "marital-status", "occupation", "relationship", "race", "sex", 
+    "capital-gain", "capital-loss", "hours-per-week", 
+    "native-country", "income"
+]
+tipos = {
+    "age": pl.Int64,
+    "workclass": pl.Categorical,
+    "fnlwgt": pl.Int64,
+    "education": pl.Categorical,
+    "education-num": pl.Int64,
+    "marital-status": pl.Categorical,
+    "occupation": pl.Categorical,
+    "relationship": pl.Categorical,
+    "race": pl.Categorical,
+    "sex": pl.Categorical,
+    "capital-gain": pl.Int64,
+    "capital-loss": pl.Int64,
+    "hours-per-week": pl.Int64,
+    "native-country": pl.Categorical,
+    "income": pl.Categorical
+}
+# Importar o arquivo compactado
+df = pl.read_csv(
+    "dados/renda_adulta.csv.gz",  # caminho da pasta "dados"
+    has_header=False,  # arquivo não possui cabeçalho
+    new_columns=colunas,          # define os nomes das colunas
+    schema_overrides=tipos,       # define os tipos de cada coluna
+    null_values="?"               # substitui "?" por nulos
+)
+df.head() #Verifica a importação
+df.schema #Confere a tipagem
+```
+
+## Questão 2:
+
+Apresente os tipos de cada uma das coluna.
+
+```{python}
+# Exibir o esquema (nomes e tipos das colunas)
+df.schema
+# Converter o schema em um DataFrame para visualizar melhor
+pl.DataFrame({
+    "Coluna": list(df.schema.keys()),
+    "Tipo": [str(t) for t in df.schema.values()]
+})
+```
+
+## Questão 3:
+
+Apresente as dimensões da tabela de dados.
+
+```{python}
+# Ver dimensões da tabela
+linhas, colunas = df.shape
+print(f"O DataFrame possui {linhas} linhas e {colunas} colunas.")
+
+df.shape #Outra maneira apresentada como: (linhas, colunas)
+```
+
+## Questão 4:
+
+Quantas pessoas recebem acima de \$50.000 e quantas pessoas recebem abaixo deste limiar?
+
+```{python}
+# Contar quantas pessoas pertencem a cada categoria de renda
+contagem_renda = (
+    df
+    .group_by("income")       # agrupa pela variável 'income'
+    .agg(pl.len())          # conta o número de linhas em cada grupo
+    .sort("income")           # ordena para facilitar a leitura
+)
+
+contagem_renda
+```
+
+## Questão 5:
+
+Crie um objeto chamado renda_longo, no qual você transforma as colunas capital-gain e capital-loss (formato wide) para formato longo. Os valores destas variáveis devem ser armazenados numa nova coluna chamada Valor e os tipos de valores (gain e loss) devem ser armazenados numa coluna chamada tipo.
+
+```{python}
+# Criar o objeto 'renda_longo' transformando as colunas capital-gain e capital-loss
+renda_longo = df.unpivot(
+    index=[col for col in df.columns if col not in ["capital-gain", "capital-loss"]],
+    on=["capital-gain", "capital-loss"],
+    variable_name="tipo",
+    value_name="Valor"
+)
+
+# Ajustar os nomes de tipo para apenas 'gain' e 'loss'
+renda_longo = renda_longo.with_columns(
+    pl.col("tipo").str.replace("capital-", "")   # remove o prefixo 'capital-'
+)
+renda_longo.head()
+```
+
+## Questão 6:
+
+Quais são as médias de horas trabalhadas por classe salarial?
+
+```{python}
+medias_horas_renda = (
+    df.group_by("income")  # Agrupa por classe salarial
+    .agg(pl.col("hours-per-week").mean().alias("media_horas_semana")  # Calcula a média de horas por semana
+    ).sort("income")  # Ordena por classe salarial
+)
+
+print("Médias de horas trabalhadas por semana por classe salarial:")
+print(medias_horas_renda)
+```
+
+## Questão 7:
+
+Se cada linha representa uma pessoa, quantas pessoas foram amostradas em cada profissão?
+
+```{python}
+pessoas_por_profissao = (
+    df.group_by("occupation")  # Agrupa por profissão
+    .agg(pl.len().alias("quantidade_pessoas")  # Conta o número de pessoas em cada profissão
+    )
+    .sort("quantidade_pessoas", descending=True)  # Ordena da maior para a menor quantidade
+)
+
+print("Quantidade de pessoas amostradas em cada profissão:")
+print(pessoas_por_profissao)
+```
+
+## Questão 8:
+
+Crie um gráfico de barras que apresente o número médio de horas trabalhadas semanalmente em função do nível salarial.
+
+```{python}
+# Primeiro, vamos preparar os dados para o gráfico
+dados_grafico = (df.group_by("income").agg(pl.col("hours-per-week").mean().alias("media_horas")).sort("income"))
+
+# Converter para pandas para facilitar a plotagem com matplotlib
+graph_pandas = dados_grafico.to_pandas()
+
+# Criar o gráfico de barras
+plt.figure(figsize=(8, 6))
+bars = plt.bar(graph_pandas['income'], graph_pandas['media_horas'], 
+               color=['#FF6B9C', '#36D7B7'])
+
+# Personalizar o gráfico
+plt.title('Média de Horas Trabalhadas por Semana por Nível Salarial', fontsize=14, fontweight='bold')
+plt.xlabel('Nível Salarial', fontsize=12)
+plt.ylabel('Média de Horas por Semana', fontsize=12)
+plt.grid(axis='y', alpha=0.3)
+
+# Adicionar os valores nas barras
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+             f'{height:.1f} horas',
+             ha='center', va='bottom', fontweight='bold')
+
+plt.tight_layout()
+plt.show()
+
+# Mostrar os dados numéricos também
+print("Dados utilizados no gráfico:")
+print(dados_grafico)
+```
+
+## Questão 9:
+
+**Desafio**: existe alguma evidência de discriminação salarial entre gêneros biológicos?
+
+```{python}
+# Contagem de homens e mulheres por classe salarial
+genero_renda = (df.group_by(["sex", "income"]).agg(pl.len().alias("n_pessoas")).sort(["sex", "income"]))
+genero_renda
+
+# Total de cada gênero
+total_genero = df.group_by("sex").agg(pl.len().alias("total"))
+# Pessoas com >50K por gênero
+acima_50k = df.filter(pl.col("income")==">50K").group_by("sex").agg(pl.len().alias("acima_50k"))
+
+# Juntar e calcular proporção
+discriminacao = total_genero.join(acima_50k, on="sex")
+discriminacao = discriminacao.with_columns(
+    (pl.col("acima_50k") / pl.col("total") * 100).alias("perc_acima_50k")
+)
+
+discriminacao
+
+# Converter para Pandas
+discriminacao_pd = discriminacao.to_pandas()
+
+# Gráfico de barras
+plt.figure(figsize=(6,4))
+bars = plt.bar(discriminacao_pd["sex"], discriminacao_pd["perc_acima_50k"], 
+               color=['#FF6B9C', '#36D7B7'], linewidth=1.2)
+plt.title("Proporção de pessoas ganhando >50K por gênero", fontsize=16, fontweight='bold')
+plt.ylabel("Percentual (%)", fontsize=12)
+plt.xlabel("Gênero", fontsize=12)
+plt.ylim(0, 40)
+plt.grid(axis='y', alpha=0.3)
+
+# Adicionar os valores em cima das barras
+for bar in bars:
+    altura = bar.get_height()
+    plt.text(
+        bar.get_x() + bar.get_width()/2,  # posição x (centro da barra)
+        altura + 1,                       # posição y (um pouco acima da barra)
+        f'{altura:.1f}%',                 # texto (ex.: 10.4%)
+        ha='center',                       # centralizar horizontalmente
+        va='bottom',
+        fontsize=11
+    )
+
+plt.tight_layout()
+plt.show()
+```
+
+**ANÁLISE ESTATÍSTICA SIMPLES:**
+
+-   **Total Masculino:** 21790
+
+-   **Total Feminino:** 10771
+
+-   **Alta renda Masculino:** 6662 (30.57%)
+
+-   **Alta renda Feminino:** 1179 (10.95%)
+
+-   **Diferença percentual:** 19.63 pontos percentuais
+
+Portanto, temos dados mostrando que homens têm 2.79x mais chances de ter alta renda do que mulheres, na qual a diferença percentual de entre os dois sexos é de 19,63 pontos. Isso evidencia uma provável discriminação salarial entre gêneros biológicos.
+
+## Data e hora do html:
+
+```{r}
+# Salvando a data e o horário em que o html foi gerado
+Sys.time()
+```

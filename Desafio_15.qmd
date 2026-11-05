@@ -1,0 +1,95 @@
+---
+title: "Desafio_15"
+author: "Amanda Cedro"
+format: 
+  html:
+    self-contained: true 
+editor: visual
+---
+
+# **DESAFIO 15**
+
+Utilize Julia e apresente um exemplo de loops em paralelo (compare o tempo de processamento gasto se utilizar apenas em série).
+```{r}
+install.packages("JuliaCall")
+library(JuliaCall)
+```
+
+```{julia}
+julia_setup(JULIA_HOME= "C:/Users/ra253507.IME/AppData/Local/Programs/Julia-1.12.1/bin")
+julia_setup()
+```
+```{julia}
+# Exemplo de processamento em série vs paralelo em Julia
+
+using Distributed
+using BenchmarkTools
+
+# Adiciona 4 processos de trabalho (ajuste conforme seu CPU)
+addprocs(4)
+
+@everywhere function tarefa_demorada(x)
+    # Simula uma tarefa pesada
+    sleep(0.1)
+    return sqrt(x)
+end
+
+# Vetor de dados
+dados = 1:20
+
+# Execução em série
+@time begin
+    resultado_serie = [tarefa_demorada(x) for x in dados]
+end
+
+# Execução em paralelo
+@time begin
+    # Usa o macro @distributed para distribuir o loop
+    @everywhere using Distributed
+    resultado_paralelo = @distributed (vcat) for x in dados
+        tarefa_demorada(x)
+    end
+end
+
+println("\nTamanho do resultado em série: ", length(resultado_serie))
+println("Tamanho do resultado em paralelo: ", length(resultado_paralelo))
+
+```
+
+```{julia}
+# Exemplo de processamento em série vs paralelo (Threads)
+
+using Base.Threads
+using BenchmarkTools
+
+println("Número de threads disponíveis: ", nthreads())
+
+# Função que simula uma tarefa pesada
+function tarefa_demorada(x)
+    sleep(0.1)       # simula tempo de cálculo
+    return sqrt(x)
+end
+
+# Dados de entrada
+dados = 1:20
+
+
+# Execução em série
+@time begin
+    resultado_serie = [tarefa_demorada(x) for x in dados]
+end
+
+
+# Execução em paralelo (usando threads)
+@time begin
+    resultado_thread = Vector{Float64}(undef, length(dados))
+    @threads for i in eachindex(dados)
+        resultado_thread[i] = tarefa_demorada(dados[i])
+    end
+end
+
+println("\nTamanho do resultado em série: ", length(resultado_serie))
+println("Tamanho do resultado em paralelo: ", length(resultado_thread))
+
+```
+

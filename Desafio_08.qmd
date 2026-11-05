@@ -1,0 +1,298 @@
+---
+title: "Desafio_08"
+author: "Amanda Cedro"
+format:
+  html: 
+    self-contained: true
+editor: visual
+---
+
+# DESAFIO 8
+```{r}
+#importando o pacote que será utilizado
+library(RSQLite)
+```
+
+## Questão 1
+Baixe o arquivo uwmadison.sqlite3. Conecte-se a ele usando o pacote RSQLite, armazenando a conexão em uma variável conn.
+```{r}
+#Descompactando o arquivo zip
+unzip("dados/database.sqlite3.zip", exdir = "dados") 
+#Conectando ao banco de dados SQLite
+conn <- dbConnect(SQLite(), "dados/database.sqlite3")
+```
+
+```{r}
+#Verificando se a conexão deu certo listando as tabelas disponíveis:
+dbListTables(conn)
+```
+
+
+## Questão 2
+Quem são e quantos são os professores que lecionaram disciplinas cujo tópico era estatística (subjects.abbreviation='STAT')
+
+```{r}
+#Mostra os valores contidos dentro dessas tabelas para podermos montar nosso código
+dbListFields(conn, "courses")
+dbListFields(conn, "subjects")
+```
+
+```{r}
+# Lista os nomes dos professores que lecionaram disciplinas STAT
+professores_stat <- dbGetQuery(conn, "
+SELECT DISTINCT i.name
+FROM instructors i
+JOIN teachings t ON i.id = t.instructor_id
+JOIN sections s ON t.section_uuid = s.uuid
+JOIN course_offerings co ON s.course_offering_uuid = co.uuid
+JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+JOIN subjects sub ON sm.subject_code = sub.code
+WHERE sub.abbreviation = 'STAT'
+ORDER BY i.name
+")
+# Mostra os primeiros nomes encontrados
+professores_stat
+```
+
+
+```{r}
+# Conta quantos professores distintos existem
+quantidade_professores <- dbGetQuery(conn, "
+SELECT COUNT(DISTINCT i.name) AS qtd_professores
+FROM instructors i
+JOIN teachings t ON i.id = t.instructor_id
+JOIN sections s ON t.section_uuid = s.uuid
+JOIN course_offerings co ON s.course_offering_uuid = co.uuid
+JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+JOIN subjects sub ON sm.subject_code = sub.code
+WHERE sub.abbreviation = 'STAT'
+")
+quantidade_professores
+```
+
+
+## Questão 3
+O GPA americano é definido numa escala de 0 a 4, em que A = 4, AB = 3.5, B = 3, BC = 2.5, C = 2, D = 1 e F = 0. Determinando a nota média de cada oferecimento pela ponderação da quantidade de alunos em cada extrato com os valores numéricos de cada conceito, indique (no que se referente a disciplinas no assunto de estatística):
+- Quem é o professor mais difícil?
+```{r}
+# Professor mais difícil 
+# Lista os nomes dos professores com menor GPA médio
+professor_dificil <- dbGetQuery(conn, "
+WITH gpa_calculations AS (
+  SELECT 
+    co.uuid AS course_offering_uuid,
+    (CAST(gd.a_count AS INTEGER) * 4 + CAST(gd.ab_count AS INTEGER) * 3.5 + 
+     CAST(gd.b_count AS INTEGER) * 3 + CAST(gd.bc_count AS INTEGER) * 2.5 + 
+     CAST(gd.c_count AS INTEGER) * 2 + CAST(gd.d_count AS INTEGER) * 1 + 
+     CAST(gd.f_count AS INTEGER) * 0) / 
+    NULLIF((CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+            CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+            CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+            CAST(gd.f_count AS INTEGER)), 0) AS gpa
+  FROM course_offerings co
+  JOIN grade_distributions gd ON co.uuid = gd.course_offering_uuid
+  JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+  JOIN subjects sub ON sm.subject_code = sub.code
+  WHERE sub.abbreviation = 'STAT'
+    AND (CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+         CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+         CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+         CAST(gd.f_count AS INTEGER)) > 0 ),
+professor_gpas AS (
+  SELECT 
+    i.id,
+    i.name AS professor,
+    AVG(gc.gpa) AS gpa_medio,
+    COUNT(DISTINCT gc.course_offering_uuid) AS num_disciplinas
+  FROM gpa_calculations gc
+  JOIN sections s ON gc.course_offering_uuid = s.course_offering_uuid
+  JOIN teachings t ON s.uuid = t.section_uuid
+  JOIN instructors i ON t.instructor_id = i.id
+  WHERE gc.gpa IS NOT NULL
+  GROUP BY i.id, i.name
+  HAVING COUNT(DISTINCT gc.course_offering_uuid) >= 1  ),
+min_gpa AS (
+  SELECT MIN(gpa_medio) as min_gpa_medio
+  FROM professor_gpas)
+SELECT 
+  pg.professor,
+  ROUND(pg.gpa_medio, 4) AS gpa_medio,
+  pg.num_disciplinas
+FROM professor_gpas pg
+JOIN min_gpa mg ON pg.gpa_medio = mg.min_gpa_medio
+ORDER BY pg.professor;") 
+
+
+professor_dificil
+```
+
+- Quem é o professor mais fácil?
+```{r}
+# Professor mais facil 
+# Lista os nomes dos professores com maior GPA médio
+professor_facil <- dbGetQuery(conn, "
+WITH gpa_calculations AS (
+  SELECT 
+    co.uuid AS course_offering_uuid,
+    (CAST(gd.a_count AS INTEGER) * 4 + CAST(gd.ab_count AS INTEGER) * 3.5 + 
+     CAST(gd.b_count AS INTEGER) * 3 + CAST(gd.bc_count AS INTEGER) * 2.5 + 
+     CAST(gd.c_count AS INTEGER) * 2 + CAST(gd.d_count AS INTEGER) * 1 + 
+     CAST(gd.f_count AS INTEGER) * 0) / 
+    NULLIF((CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+            CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+            CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+            CAST(gd.f_count AS INTEGER)), 0) AS gpa
+  FROM course_offerings co
+  JOIN grade_distributions gd ON co.uuid = gd.course_offering_uuid
+  JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+  JOIN subjects sub ON sm.subject_code = sub.code
+  WHERE sub.abbreviation = 'STAT'
+    AND (CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+         CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+         CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+         CAST(gd.f_count AS INTEGER)) > 0 ),
+professor_gpas AS (
+  SELECT 
+    i.id,
+    i.name AS professor,
+    AVG(gc.gpa) AS gpa_medio,
+    COUNT(DISTINCT gc.course_offering_uuid) AS num_disciplinas
+  FROM gpa_calculations gc
+  JOIN sections s ON gc.course_offering_uuid = s.course_offering_uuid
+  JOIN teachings t ON s.uuid = t.section_uuid
+  JOIN instructors i ON t.instructor_id = i.id
+  WHERE gc.gpa IS NOT NULL
+  GROUP BY i.id, i.name
+  HAVING COUNT(DISTINCT gc.course_offering_uuid) >= 1 ),
+max_gpa AS (
+  SELECT MAX(gpa_medio) as max_gpa_medio
+  FROM professor_gpas )
+SELECT 
+  pg.professor,
+  ROUND(pg.gpa_medio, 4) AS gpa_medio,
+  pg.num_disciplinas
+FROM professor_gpas pg
+JOIN max_gpa mg ON pg.gpa_medio = mg.max_gpa_medio
+ORDER BY pg.professor;") 
+
+professor_facil
+```
+
+- Qual é a disciplina mais difícil?
+```{r}
+# Disciplina mais difícil 
+#Lista o nome das disciplinas com menor GPA médio (seleciona valor min)
+disciplina_dificil <- dbGetQuery(conn, "
+WITH gpa_calculations AS (
+  SELECT 
+    co.uuid AS course_offering_uuid,
+    co.course_uuid AS course_uuid,
+    (CAST(gd.a_count AS INTEGER) * 4 + CAST(gd.ab_count AS INTEGER) * 3.5 + 
+     CAST(gd.b_count AS INTEGER) * 3 + CAST(gd.bc_count AS INTEGER) * 2.5 + 
+     CAST(gd.c_count AS INTEGER) * 2 + CAST(gd.d_count AS INTEGER) * 1 + 
+     CAST(gd.f_count AS INTEGER) * 0) / 
+    NULLIF((CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+            CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+            CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+            CAST(gd.f_count AS INTEGER)), 0) AS gpa
+  FROM course_offerings co
+  JOIN grade_distributions gd ON co.uuid = gd.course_offering_uuid
+  JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+  JOIN subjects sub ON sm.subject_code = sub.code
+  WHERE sub.abbreviation = 'STAT'
+    AND (CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+         CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+         CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+         CAST(gd.f_count AS INTEGER)) > 0  ),
+course_gpas AS (
+  SELECT 
+    c.number AS course_number,
+    c.name AS course_name,
+    AVG(gc.gpa) AS gpa_medio,
+    COUNT(DISTINCT gc.course_offering_uuid) AS num_ofertas
+  FROM gpa_calculations gc
+  JOIN courses c ON gc.course_uuid = c.uuid
+  WHERE gc.gpa IS NOT NULL
+  GROUP BY c.number, c.name
+  HAVING COUNT(DISTINCT gc.course_offering_uuid) >= 1  ),
+min_gpa AS (
+  SELECT MIN(gpa_medio) as min_gpa_medio
+  FROM course_gpas )
+SELECT 
+  cg.course_number,
+  cg.course_name,
+  ROUND(cg.gpa_medio, 4) AS gpa_medio,
+  cg.num_ofertas
+FROM course_gpas cg
+JOIN min_gpa mg ON cg.gpa_medio = mg.min_gpa_medio;")
+
+disciplina_dificil
+```
+
+
+- Qual é a disciplina mais fácil?
+```{r}
+# Disciplina mais facil 
+#Lista o nome das disciplinas com maior GPA médio (seleciona valor max)
+disciplina_facil <- dbGetQuery(conn, "
+WITH gpa_calculations AS (
+  SELECT 
+    co.uuid AS course_offering_uuid,
+    co.course_uuid AS course_uuid,
+    -- Cálculo do GPA ponderado (convertendo TEXT para INT)
+    (CAST(gd.a_count AS INTEGER) * 4 + CAST(gd.ab_count AS INTEGER) * 3.5 + 
+     CAST(gd.b_count AS INTEGER) * 3 + CAST(gd.bc_count AS INTEGER) * 2.5 + 
+     CAST(gd.c_count AS INTEGER) * 2 + CAST(gd.d_count AS INTEGER) * 1 + 
+     CAST(gd.f_count AS INTEGER) * 0) / 
+    NULLIF((CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+            CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+            CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+            CAST(gd.f_count AS INTEGER)), 0) AS gpa
+  FROM course_offerings co
+  JOIN grade_distributions gd ON co.uuid = gd.course_offering_uuid
+  JOIN subject_memberships sm ON co.uuid = sm.course_offering_uuid
+  JOIN subjects sub ON sm.subject_code = sub.code
+  WHERE sub.abbreviation = 'STAT'
+    AND (CAST(gd.a_count AS INTEGER) + CAST(gd.ab_count AS INTEGER) + 
+         CAST(gd.b_count AS INTEGER) + CAST(gd.bc_count AS INTEGER) + 
+         CAST(gd.c_count AS INTEGER) + CAST(gd.d_count AS INTEGER) + 
+         CAST(gd.f_count AS INTEGER)) > 0 ),
+course_gpas AS (
+  SELECT 
+    c.number AS course_number,
+    c.name AS course_name,
+    AVG(gc.gpa) AS gpa_medio,
+    COUNT(DISTINCT gc.course_offering_uuid) AS num_ofertas
+  FROM gpa_calculations gc
+  JOIN courses c ON gc.course_uuid = c.uuid
+  WHERE gc.gpa IS NOT NULL
+  GROUP BY c.number, c.name
+  HAVING COUNT(DISTINCT gc.course_offering_uuid) >= 1  ),
+max_gpa AS (
+  SELECT MAX(gpa_medio) as max_gpa_medio
+  FROM course_gpas )
+SELECT 
+  cg.course_number,
+  cg.course_name,
+  ROUND(cg.gpa_medio, 4) AS gpa_medio,
+  cg.num_ofertas
+FROM course_gpas cg
+JOIN max_gpa mg ON cg.gpa_medio = mg.max_gpa_medio;")
+
+disciplina_facil
+```
+
+
+## Questão 4
+
+```{r}
+# Desconectando da conexão conn
+dbDisconnect(conn)
+```
+
+
+```{r}
+#Mostra a data e hora que o PDF foi gerado
+Sys.time()
+```
+

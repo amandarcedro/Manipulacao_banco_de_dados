@@ -1,0 +1,171 @@
+---
+title: "Desafio_06"
+author: "Amanda Cedro"
+format: 
+  html:
+    self-contained: true
+editor: visual
+---
+# DESAFIO 06:
+
+```{r}
+#baixando o pacote para abrir SQL
+#install.packages("RSQLite")
+```
+
+```{r}
+#lendo o pacote
+library(RSQLite)
+```
+## Questão 1: 
+Armazenar o diretório (path) e o nome completo do arquivo (fname)
+```{r}
+path <- "dados"
+# 2) Combinando a pasta (path) com o nome do arquivo usando file.path().
+fname <- file.path(path, "disco.db")
+# 4) Vendo se o arquivo existe no caminho formado.
+file.exists(fname)
+```
+## Questão 2: 
+Conecte-se ao arquivo de banco de dados. Armazene a conexão na variável conn
+```{r}
+#conectando ao arquivo de banco de dados
+conn <- dbConnect(SQLite(), dbname = fname)
+print("Conectado com sucesso")
+```
+## Questão 3: 
+Liste as tabelas existentes no banco de dados.
+```{r}
+dbListTables(conn)
+```
+## Questão 4: 
+Identifique os nomes de todas as colunas existentes na tabela customers.
+```{r}
+dbListFields(conn, "customers")
+```
+
+## Questão 5:
+Utilizando apenas SQLite, com o apoio do comando dbGetQuery, identifique quantos clientes estão atualmente cadastrados neste banco de dados.
+```{r}
+dbGetQuery(conn, "SELECT COUNT(*) AS total_clientes FROM customers;")
+```
+
+## Questão 6:
+Utilizando apenas SQLite, identifique o número de países diferentes em que moram os clientes encontrados acima.
+```{r}
+dbGetQuery(conn, "SELECT COUNT(DISTINCT country) AS paises_distintos FROM customers;")
+```
+## Questão 7:
+Utilizando apenas SQLite, quantos clientes existem por país? A tabela resultante deve conter o nome do país e a respectiva contagem, além de ser ordenada de maneira decrescente pela referida contagem.
+```{r}
+dbGetQuery(conn, 
+  "SELECT country, COUNT(*) 
+  AS qtd_clientes
+  FROM customers
+  GROUP BY country
+  ORDER BY qtd_clientes DESC;")
+```
+
+## Questão 8:
+Quais são os 5 países com mais clientes registrados? Use apenas SQLite.
+```{r}
+dbGetQuery(conn,
+  "SELECT country, COUNT(*) 
+  AS qtd_clientes
+  FROM customers
+  GROUP BY country
+  ORDER BY qtd_clientes DESC
+  LIMIT 5;")
+```
+
+## Questão 9:
+Quais são os países registrados que possuem apenas 6 letras no nome?
+```{r}
+dbGetQuery(conn, 
+  "SELECT DISTINCT country
+  FROM customers
+  WHERE LENGTH(country) = 6;")
+```
+
+## Questão 10:
+Quais foram as músicas compradas por clientes brasileiros?
+```{r}
+dbGetQuery(conn,
+  "SELECT 
+  T.Name AS musica, 
+  C.FirstName || ' ' || C.LastName AS cliente
+  FROM customers AS C
+  JOIN invoices AS I ON C.CustomerId = I.CustomerId
+  JOIN invoice_items  AS II ON I.InvoiceId = II.InvoiceId
+  JOIN tracks AS T ON II.TrackId = T.TrackId
+  WHERE c.Country = 'Brazil'
+  ORDER BY Cliente, Musica;")
+
+```
+# QUESTÕES ADICIONAIS (DESAFIO 6):
+
+## Questão 11:
+Qual o álbum mais tocado por país?
+```{r}
+dbGetQuery(conn, "
+  WITH album_counts AS (
+    SELECT c.Country,
+           a.Title AS album,
+           COUNT(*) AS total
+    FROM customers c
+    JOIN invoices i ON c.CustomerId = i.CustomerId
+    JOIN invoice_items ii ON i.InvoiceId = ii.InvoiceId
+    JOIN tracks t ON ii.TrackId = t.TrackId
+    JOIN albums a ON t.AlbumId = a.AlbumId
+    GROUP BY c.Country, a.Title
+  ),
+  max_counts AS (
+    SELECT Country, MAX(total) AS max_total
+    FROM album_counts
+    GROUP BY Country
+  )
+  SELECT ac.Country, ac.album, ac.total
+  FROM album_counts ac
+  INNER JOIN max_counts mc
+    ON ac.Country = mc.Country
+   AND ac.total = mc.max_total
+  ORDER BY ac.Country;
+")
+```
+
+## Questão 12:
+Qual o artista mais tocado por pais?
+```{r}
+dbGetQuery(conn, "
+  WITH artist_counts AS (
+    SELECT c.Country,
+           ar.Name AS artista,
+           COUNT(*) AS total
+    FROM customers c
+    JOIN invoices i ON c.CustomerId = i.CustomerId
+    JOIN invoice_items ii ON i.InvoiceId = ii.InvoiceId
+    JOIN tracks t ON ii.TrackId = t.TrackId
+    JOIN albums a ON t.AlbumId = a.AlbumId
+    JOIN artists ar ON a.ArtistId = ar.ArtistId
+    GROUP BY c.Country, ar.Name
+  ),
+  max_counts AS (
+    SELECT Country, MAX(total) AS max_total
+    FROM artist_counts
+    GROUP BY Country
+  )
+  SELECT ac.Country, ac.artista, ac.total
+  FROM artist_counts ac
+  JOIN max_counts mc
+    ON ac.Country = mc.Country AND ac.total = mc.max_total
+  ORDER BY ac.Country;
+")
+```
+
+
+## Questão 13:
+Desconecte do banco de dados.
+```{r}
+dbDisconnect(conn)
+print("Desconectado com sucesso")
+```

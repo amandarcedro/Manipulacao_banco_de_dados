@@ -1,0 +1,127 @@
+---
+title: "Desafio_14"
+author: "Amanda Cedro"
+format: 
+  html:
+    self-contained: true
+editor: visual
+---
+
+# **DESAFIO 14**
+
+```{r}
+# Carregando pacotes necessários
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Questão 1:
+
+Importe o conjunto de dados diamonds, cujo arquivo está disponível no website da disciplina.
+
+```{r}
+# Lendo o arquivo CSV compactado (.csv.gz)
+diamonds <- read_csv("dados/diamonds.csv.gz")
+# Visualizando as primeiras linhas
+head(diamonds)
+# Verificando a estrutura
+glimpse(diamonds)
+#conferindo dados
+summary(diamonds)
+```
+
+## Questão 2:
+
+Crie uma visualização de dados que descreva a associação existente entre as variáveis peso (carat) e preço (price). Que ações você tomou para garantir que você produziu um gráfico de boa qualidade? Escreva um parágrafo comunicando os seus achados.
+
+```{r}
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.4, color = "purple") +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  labs(
+    title = "Relação entre Peso (carat) e Preço (USD) de Diamantes",
+    subtitle = "Curva de tendência não linear — amostra de 5.000 observações",
+    x = "Peso do diamante (carat)",
+    y = "Preço (USD)"
+  ) +
+  theme_light()
+```
+
+**Ações tomadas:**
+
+-   Transparência (alpha): apliquei alpha = 0.4 nos pontos para que áreas mais densas ficassem visíveis sem ocultar outras regiões do gráfico.
+-   Curva de tendência LOESS: utilizei geom_smooth(method = "loess") para representar de forma mais realista a relação entre peso e preço, que não é linear.
+-   Cores neutras e tema limpo: escolhi um tom azul escuro para os pontos e theme_light() para dar contraste e clareza visual.
+-   Títulos e rótulos descritivos: incluí título, subtítulo e nomes de eixos explicativos, tornando o gráfico autoexplicativo e informativo.
+
+**Conclusões:** O gráfico mostra uma relação positiva e fortemente não linear entre o peso (carat) e o preço (price) dos diamantes.É notável que diamantes mais pesados tendem a ter preços muito mais altos, e a curva LOESS evidencia que o crescimento do preço é acelerado conforme o peso aumenta, ou seja, o preço cresce de forma exponencial, não proporcional. Além disso, há maior dispersão de pontos em diamantes grandes, indicando que fatores como corte, cor e clareza também influenciam o valor final. O gráfico confirma que o peso é um fator determinante no preço, mas não o único.
+
+## Questão 3:
+
+A relação identificada na questão anterior é a mesma relação presente nos diferentes cortes de diamantes? Crie uma visualização que demonstre seus achados eficientemente. Descreva sua conclusão em um parágrafo.
+
+```{r}
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = FALSE, color = "black") +
+  facet_wrap(~ cut) +
+  labs(
+    title = "Relação entre Peso (carat) e Preço (USD) por Tipo de Corte",
+    x = "Peso do diamante (carat)",
+    y = "Preço (USD)"
+  ) +
+  theme_light() +
+  theme(legend.position = "none")
+```
+
+**Conclusão:** Sim, a relação identificada na questão anterior se mantém em todos os diferentes tipos de corte dos diamantes. Em todas as categorias de corte, observa-se uma relação positiva: à medida que o peso aumenta, o preço também cresce. No entanto, a intensidade dessa relação varia conforme a qualidade do corte. Diamantes com cortes de melhor qualidade, como Ideal e Premium, apresentam preços mais elevados para o mesmo peso, enquanto cortes inferiores, como Fair, resultam em valores menores. Isso indica que, embora o peso seja o principal fator determinante do preço, o corte afeta significativamente a valorização do diamante, tornando o preço mais alto para diamantes com acabamento superior.
+
+## Questão 4:
+
+Crie uma visualização que mostre a relação entre preço e peso do diamante, considerando as diferentes combinações de qualidade de corte, cor e clareza do diamante. Quais foram as dificuldades encontradas? A relação entre preço e peso é a mesma para diferentes configurações de diamantes?
+
+```{r warning=FALSE, message=FALSE}
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_smooth(aes(color = color), method = "loess", se = TRUE) +
+  facet_grid(cut ~ clarity) +
+  labs(
+    title = "Relação Preço-Peso por Qualidade do Diamante",
+    subtitle = "Linhas de tendência mostram variação entre categorias",
+    x = "Peso (carat)", y = "Preço (USD)", color = "Cor"
+  ) +
+  scale_y_continuous(labels = scales::dollar) +
+  theme_minimal()
+```
+
+**Dificuldades encontradas:**
+
+-   Sobreposição de linhas de tendência: Múltiplas curvas coloridas em cada faceta ainda podem gerar confusão visual
+-   Intervalos de confiança sobrepostos: As áreas sombreadas (se = TRUE) podem se sobrepor, dificultando a leitura precisa
+-   Escala de cores ainda desafiadora: 7 cores diferentes (D-J) em cada painel mantêm a complexidade de distinção
+-   Densidade de informação: 35 painéis com múltiplas linhas continuam exigindo grande esforço do observador
+-   Comparação cruzada limitada: Ainda difícil comparar o mesmo nível de cor entre diferentes cortes e claridades
+
+**Conclusão:**
+
+Variação por Cor se Mantém Consistente:
+
+-   Para o mesmo peso, diamantes de cor D custam significativamente mais que J
+
+Efeito Combinatório de Corte e Clareza:
+
+-   Cortes superiores (Ideal, Premium) + Clarezas superiores (IF, VVS): Curvas mais íngremes e preços mais altos
+-   Cortes inferiores (Fair, Good) + Clarezas inferiores (SI, I1): Curvas mais achatadas e preços menores
+
+Padrões de Não-Linearidade Acentuados:
+
+-   Todos os painéis mostram relação exponencial, não linear
+-   O "prêmio por quilate" aumenta desproporcionalmente para diamantes maiores
+-   Ponto de inflexão visível em torno de 1-2 quilates
+
+Assim, podemos concluir que a relação preço-peso não é uniforme, ela é significativamente modificada pela qualidade do diamante, com fatores de qualidade (corte, cor, clareza) criando múltiplas "curvas de valor" distintas no mercado de diamantes, onde a qualidade atribuída ao valor do diamante multiplica e não apenas soma.
+
+```{r}
+# Salvando a data e o horário em que o html foi gerado
+Sys.time()
+```

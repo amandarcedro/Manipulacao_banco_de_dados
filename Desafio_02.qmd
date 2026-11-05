@@ -1,0 +1,208 @@
+---
+title: "Desafio_02"
+author: "Amanda Cedro"
+format: 
+  html:
+    self-contained: true
+editor: visual
+---
+
+```{r}
+library(reticulate)
+virtualenv_create("r-reticulate", python = "C:/Program Files/Python312/python.exe")
+use_virtualenv("r-reticulate", required = TRUE)
+py_discover_config()
+py_install(c("pandas","matplotlib","calplot"), envname = "r-reticulate")
+```
+
+```{python}
+#Baixando os pacotes para ser possível realizar o código
+import pandas as pd
+import matplotlib.pyplot as plt
+import calplot
+import zipfile
+```
+
+1-
+
+```{python}
+#As estatísticas suficientes são: Número total de voos e número de voos que tem a coluna ARRIVAL_DELAY > 10.
+```
+
+2-
+
+```{python}
+def getStats(x, pos=None):
+    # Filtra as companhias aéreas desejadas
+    x = x[x["AIRLINE"].isin(["AA", "DL", "UA", "US"])]
+    
+    # Remove células que contenham NA
+    x = x.dropna(subset=["ARRIVAL_DELAY", "AIRLINE", "DAY", "MONTH"])
+    
+    # Agrupa por companhia, dia e mês e calcula estatísticas suficientes: total de voos e voos atrasados (>10 min)
+    stats = (
+        x.groupby(["AIRLINE", "DAY", "MONTH"])#Agrupa o DataFrame x por companhia aérea, dia e mês, permitindo calcular estatísticas para cada grupo separadamente
+         .agg( #agrupa
+             n=('ARRIVAL_DELAY', 'count'), # Total de voos
+             atrasos=('ARRIVAL_DELAY', lambda x: (x > 10).sum()) # Total de voos com atraso > 10 min
+         )
+         .reset_index()#Transforma os índices do DataFrame (geralmente criados por groupby) em colunas normais, tornando o DataFrame mais fácil de usar
+    )
+    
+    return stats#Entrega o resultado processado (stats) de volta para quem chamou a função, permitindo continuar o trabalho com esses dados
+```
+
+3-
+
+```{python}
+#criando uma lista vazia para colocar o dado importado e seleconando o tamanho que as chuncks serão lidas
+lista = []
+tamanho = 100_000
+colunas = ['AIRLINE','ARRIVAL_DELAY','YEAR','MONTH','DAY']  # colunas de interesse
+
+#importa os dados espefcificamente do zip e seleciona as colunas de interesse, colocando esses dados todos em uma lista
+# Abre o arquivo CSV dentro do ZIP sem extraí-lo, usando with para garantir que o arquivo e o ZIP sejam fechados automaticamente
+with zipfile.ZipFile("dados/flights.csv.zip") as z:
+    with z.open("flights.csv") as f:
+        for chunk in pd.read_csv(f, usecols=colunas, chunksize=tamanho):# Lê o CSV em pedaços (chunks)
+            final = getStats(chunk, pos=None)  # Calcula as estatísticas do chunk usando a função getStats
+            lista.append(final) # Adiciona o resultado do chunk à lista
+#Junta todas as chuncks em um dataframe
+dados = pd.concat(lista, ignore_index=True)
+```
+
+4-
+
+```{python}
+def computeStats(y):
+    # Agrupa por companhia, dia e mês e soma n e atrasos
+    grouped = y.groupby(['AIRLINE','DAY','MONTH']).agg(
+        n_sum=('n', 'sum'),#Cria uma tupla indicando que queremos somar a coluna 'n', geralmente para contar o total de registros por grupo após um groupby()
+        atrasos_sum=('atrasos', 'sum')#Cria uma tupla indicando que queremos somar a coluna 'atrasos', geralmente usada para agregar dados após um groupby()
+    ).reset_index()#garante que o índice seja sequencial, facilitando integração com o DataFrame principal e evitando problemas de alinhamento de dados
+    
+    # Calcula o percentual de atraso
+    grouped['Perc'] = grouped['atrasos_sum'] / grouped['n_sum']
+    
+    # Cria coluna Data no formato AAAA-MM-DD
+    grouped['Data'] = pd.to_datetime(#Cria a coluna 'Data' no DataFrame, convertendo ano, mês e dia em datas completas, usando o Pandas para facilitar manipulação e plotagem
+        dict(year=2015, month=grouped['MONTH'], day=grouped['DAY'])
+    )#Cria um dicionário de informações de data (ano fixo + mês e dia vindos do DataFrame) que pode ser usado para gerar datas completas no Pandas
+    
+    # Seleciona colunas finais
+    grouped = grouped[['AIRLINE', 'Data', 'Perc']]#Mantém apenas as colunas AIRLINE, Data e Perc no DataFrame, descartando todas as outras colunas que não são relevantes
+    grouped = grouped.rename(columns={'AIRLINE':'Cia'})#Renomeia a coluna 'AIRLINE' para 'Cia' no DataFrame, deixando os nomes mais curtos e consistentes com o restante do código
+    
+    return grouped#Entrega o DataFrame final (grouped) da função para quem a chamou, permitindo continuar trabalhando com os dados já processados
+
+# Aplica a função
+in1 = computeStats(dados)
+
+# Verifica resultado
+print(in1.head())
+
+```
+
+5-
+
+```{python}
+import matplotlib.pyplot as plt #Importa o módulo pyplot do Matplotlib, que é a interface principal para criar gráficos
+import matplotlib.colors as mcolors#Importa o submódulo colors do Matplotlib, responsável por trabalhar com cores
+import pandas as pd #Importa o Pandas, biblioteca usada para manipular dados tabulares (DataFrames)
+import numpy as np #Importa o NumPy, biblioteca para cálculos numéricos e manipulação de arrays/matrizes
+import calendar #Importa o módulo calendar da biblioteca padrão do Python, que contém funções relacionadas a datas e calendários
+
+# Função para extrair dados de uma companhia
+# Recebe um DataFrame 'stats' e o código da companhia 'cia'
+# Retorna uma série com índice Data e valores de 'Perc'
+def base_calendario(stats, cia):
+    df = stats[stats['Cia'] == cia].copy()  # Filtra apenas a companhia
+    df = df.set_index('Data')['Perc']       # Define 'Data' como índice, mantém 'Perc'
+    return df
+
+# Lista das companhias que serão plotadas
+cias = ["AA", "DL", "UA", "US"]
+
+# Criação de um colormap customizado do azul para vermelho
+colors = ["#4575b4", "#d73027"]
+cmap = mcolors.LinearSegmentedColormap.from_list("custom_blue_red", colors) #Cria um gradiente de cores do azul ao vermelho chamado cmap, que será usado para colorir os valores da matriz do calendário no gráfico
+vmin = 0     # valor mínimo do gradiente (azul)
+vmax = 0.6   # valor máximo do gradiente (vermelho)
+
+
+# Loop principal para cada companhia
+for cia in cias:
+    # Extrai dados filtrados da companhia
+    df_cia = base_calendario(in1, cia)
+    
+    # Cria a figura e o GridSpec (grade) para separar colorbar à direita
+    fig = plt.figure(figsize=(20, 10))
+    # Grid de 3 linhas x 5 colunas: 4 para meses + 1 para colorbar
+    gs = fig.add_gridspec(3, 5, width_ratios=[1, 1, 1, 1, 0.05], wspace=0.3, hspace=0.4)
+    
+    # Criação dos subplots para os meses
+    axes = []
+    for i in range(12): #para cada i sendo um mês dentro dos 12 meses
+        row = i // 4 # determina a linha do mês
+        col = i % 4  # determina a coluna (0 a 3) para os meses
+        ax = fig.add_subplot(gs[row, col]) # adiciona o subplot à figura
+        axes.append(ax) # armazena para facilitar o acesso
+
+
+    # Loop para cada mês do ano
+    for i, mes in enumerate(range(1, 13)): #fornecendo o número do mês (mes) e o índice do subplot (i) para organizar os gráficos de cada mês na figura
+        ax = axes[i]#Seleciona o subplot do mês atual na lista de subplots, permitindo desenhar o gráfico apenas nele
+        df_mes = df_cia[df_cia.index.month == mes] # filtra dados do mês
+        
+        if not df_mes.empty:
+            # Descobre o primeiro e último dia do mês
+            primeiro_dia = pd.Timestamp(year=2015, month=mes, day=1)
+            ultimo_dia = pd.Timestamp(year=2015, month=mes, day=calendar.monthrange(2015, mes)[1])
+            
+            # Cria índice completo de datas do mês e preenche dias sem voos com NaN
+            idx = pd.date_range(primeiro_dia, ultimo_dia)
+            df_mes = df_mes.reindex(idx, fill_value=np.nan)
+            
+            # Determina o dia da semana (0=Seg, 6=Dom)
+            dias_semana = df_mes.index.weekday
+            
+            # Calcula a semana relativa dentro do mês (primeira semana = 0)
+            semana_relativa = np.zeros(len(df_mes), dtype=int) #Cria um vetor de zeros do tamanho do mês, que servirá para armazenar a semana relativa de cada dia do mês no calendário
+            for j, dia in enumerate(df_mes.index): #Percorre cada dia do mês, obtendo a posição do dia no array (j) e a data real (dia), para poder calcular a semana relativa de cada dia
+                semana_iso = dia.isocalendar().week #pega a data do dia e calcula a semana do ano em que ele está, usando o padrão ISO
+                semana_relativa[j] = semana_iso - df_mes.index[0].isocalendar().week #Define a linha da matriz em que cada dia do mês deve ficar, calculando a semana relativa ao início do mês, não ao ano
+            if semana_relativa.min() < 0:  # ajuste especial para semanas negativas
+                semana_relativa += 1 #garante que todas as semanas do mês tenham índice >= 0, evitando problemas de alinhamento na matriz do calendário
+            
+            # Cria matriz semanas x dias (inicializada com NaN)
+            matriz = np.full((semana_relativa.max()+1, 7), np.nan)
+            
+            # Preenche matriz com os valores de atraso
+            matriz[semana_relativa, dias_semana] = df_mes.values
+            
+            # Plota a matriz no subplot correspondente
+            im = ax.imshow(matriz, cmap=cmap, vmin=vmin, vmax=vmax, aspect='auto')
+            
+            # Configura ticks, labels e grade do subplot
+            ax.set_xticks(range(7))  # dias da semana
+            ax.set_xticklabels(['S','T','Q','Q','S','S','D']) #mostra abaixo de cada coluna do gráfico o dia da semana correspondente, facilitando a leitura do calendário
+            ax.set_yticks([]) # remove labels do eixo y
+            ax.set_title(df_mes.index[0].strftime('%B'), fontsize=12)  # título do mês
+            # Linhas de grade branca separando os dias
+            ax.set_xticks(np.arange(-0.5, 7, 1), minor=True) #marca as linhas verticais entre as colunas da matriz do calendário, permitindo que a grade
+            ax.set_yticks(np.arange(-0.5, matriz.shape[0], 1), minor=True) #marca as linhas horizontais entre as semanas do calendário, permitindo depois desenhar a grade branca
+            ax.grid(which='minor', color='white', linestyle='-', linewidth=1) #desenha linhas brancas finas entre as células da matriz para separar visualmente os dias e as semanas do calendário
+            ax.tick_params(which='minor', bottom=False, left=False) # Remove ticks da grade
+
+    # Cria eixo do colorbar na última coluna (direita)
+    cax = fig.add_subplot(gs[:, 4])          # ocupa todas as linhas da última coluna
+    cbar = fig.colorbar(im, cax=cax, orientation='vertical') # Cria colorbar vertical
+    cbar.set_label('Perc', rotation=270, labelpad=15, fontsize=12) # Label do colorbar
+    
+    # Título geral da figura
+    fig.suptitle(f'Percentual de atrasos - {cia} (2015)', fontsize=20)
+    
+    # Exibe o gráfico
+    plt.show()
+
+```
